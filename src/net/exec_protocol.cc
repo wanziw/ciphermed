@@ -657,6 +657,14 @@ mpz_class exec_compute_dot_product(tcp::socket &socket, const vector<mpz_class> 
     return v;
 }
 
+vector<mpz_class> exec_compute_dot_product2(tcp::socket &socket, Paillier &p)
+{
+    // get the input vector from the socket
+    vector<mpz_class> y = read_int_array_from_socket(socket);
+    
+    return y;
+}
+
 void exec_help_compute_dot_product(tcp::socket &socket, const vector<mpz_class> &y, Paillier_priv &pp, bool encrypted_input)
 {
     vector<mpz_class> c_y;

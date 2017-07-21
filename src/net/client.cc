@@ -142,7 +142,7 @@ void Client::get_server_pk_paillier()
     }
 
     Protobuf::Paillier_PK pk = readMessageFromSocket<Protobuf::Paillier_PK>(socket_);
-    cout << "Received Paillier PK" << endl;
+    //cout << "Received Paillier PK" << endl;
     server_paillier_ = create_from_pk_message(pk,rand_state_);
 }
 
@@ -526,6 +526,11 @@ void Client::run_change_encryption_scheme_slots_helper()
 mpz_class Client::compute_dot_product(const vector<mpz_class> &x)
 {
     return exec_compute_dot_product(socket_, x, *server_paillier_);
+}
+
+vector<mpz_class> Client::compute_dot_product2()
+{
+    return exec_compute_dot_product2(socket_, *server_paillier_);
 }
 
 void Client::help_compute_dot_product(const vector<mpz_class> &y, bool encrypted_input)
