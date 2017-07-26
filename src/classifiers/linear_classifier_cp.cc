@@ -29,13 +29,16 @@
 #include <protobuf/protobuf_conversion.hh>
 #include <net/message_io.hh>
 #include <util/util.hh>
+#include <fstream>
+#include <vector>
+#include <omp.h>
 
 
 Linear_Classifier_Server::Linear_Classifier_Server(gmp_randstate_t state, unsigned int keysize, unsigned int lambda, const vector<mpz_class> &model, size_t bit_size)
 : Server(state, Linear_Classifier_Server::key_deps_descriptor(), keysize, lambda), enc_model_(model.size()), bit_size_(bit_size)
 {
     for (size_t i = 0; i < enc_model_.size(); i++) {
-        enc_model_[i] = paillier_->encrypt(model[i]);
+	enc_model_[i] = paillier_->encrypt(model[i]);
     }
 }
 
@@ -121,11 +124,15 @@ bool Linear_Classifier_Client::run()
 Bench_Linear_Classifier_Server::Bench_Linear_Classifier_Server(gmp_randstate_t state, unsigned int keysize, unsigned int lambda, const vector<mpz_class> &model, size_t bit_size, unsigned int nRounds)
 : Server(state, Linear_Classifier_Server::key_deps_descriptor(), keysize, lambda), enc_model_(model.size()), bit_size_(bit_size), nRounds_(nRounds)
 {
+    Timer t;
+    t.lap();
+
 #pragma omp parallel for
     for (size_t i = 0; i < enc_model_.size(); i++) {
-	enc_model_[i] = model[i];
-	//enc_model_[i] = paillier_->encrypt(model[i]);
+	enc_model_[i] = paillier_->encrypt(model[i]);
     }
+
+    cout<<"TTTT "<<t.lap_ms();
 }
 
 Server_session* Bench_Linear_Classifier_Server::create_new_server_session(tcp::socket &socket)
@@ -146,14 +153,6 @@ void Bench_Linear_Classifier_Server_session::run_session()
             help_compute_dot_product(linear_server_->enc_model(),true);
             
             help_enc_comparison(linear_server_->bit_size(), GC_PROTOCOL);
-
-cout<<"\033[32m  ____                 _ ____             _ "<<endl;
-cout<<"\033[32m / ___| ___   ___   __| | __ ) _   _  ___| |"<<endl;
-cout<<"\033[32m| |  _ / _ \\ / _ \\ / _` |  _ \\| | | |/ _ \\ |"<<endl;
-cout<<"\033[32m| |_| | (_) | (_) | (_| | |_) | |_| |  __/_|"<<endl;
-cout<<"\033[32m \\____|\\___/ \\___/ \\__,_|____/ \\__, |\\___(_)"<<endl;
-cout<<"\033[32m	                        |___/       "<<endl;
-	
             
             server_time += GET_BENCHMARK_TIME;
 //            cout << "Round #" << i << " done" << endl;
@@ -164,7 +163,7 @@ cout<<"\033[32m	                        |___/       "<<endl;
 #endif
 
     } catch (std::exception& e) {
-        //std::cout << "Exception: " << e.what() << std::endl;
+        std::cout << "Exception: " << e.what() << std::endl;
     }
     
     delete this;
@@ -177,30 +176,22 @@ Bench_Linear_Classifier_Client::Bench_Linear_Classifier_Client(boost::asio::io_s
     
 }
 
-void Bench_Linear_Classifier_Client::run(int num, int num2)
+void Bench_Linear_Classifier_Client::run(int num)
 {
     // get public keys
     RESET_BYTE_COUNT
     exchange_keys();
 #ifdef BENCHMARK
     const double to_kB = 1 << 10;
-    //cout << "Key exchange: " <<  (IOBenchmark::byte_count()/to_kB) << " kB" << endl;
-    //cout << IOBenchmark::interaction_count() << " interactions" << endl;
+    cout << "Key exchange: " <<  (IOBenchmark::byte_count()/to_kB) << " kB" << endl;
+    cout << IOBenchmark::interaction_count() << " interactions" << endl;
 #endif
     double compare_time = 0., dot_prod_time = 0., client_time = 0.;
     Timer t;
 
     RESET_BYTE_COUNT
 
-    cout<<"\033[32m  ____                            _   _                   "<<endl;
-    cout<<"\033[32m / ___|___  _ __  _ __   ___  ___| |_(_)_ __   __ _       "<<endl;
-    cout<<"\033[32m| |   / _ \\| '_ \\| '_ \\ / _ \\/ __| __| | '_ \\ / _` |      "<<endl;
-    cout<<"\033[32m| |__| (_) | | | | | | |  __/ (__| |_| | | | | (_| |_ _ _ "<<endl;
-    cout<<"\033[32m \\____\\___/|_| |_|_| |_|\\___|\\___|\\__|_|_| |_|\\__, (_|_|_)"<<endl;
-    cout<<"\033[32m			                      |___/       "<<endl;
-
-	//ifstream fin1("../../classifiers/lbp_lfw1000.out");
-	ifstream fin1("../../classifiers/testLFW.out");
+	ifstream fin1("../../classifiers/lbp_lfw1000.out");
 	ifstream fin2("../../classifiers/A1000.out");
 	ifstream fin3("../../classifiers/G1000.out");
 
@@ -210,94 +201,99 @@ void Bench_Linear_Classifier_Client::run(int num, int num2)
 	myV.resize(12792, vector<mpz_class>(160, 0));
 	myA.resize(160,   vector<mpz_class>(160, 0));
 	myG.resize(160,   vector<mpz_class>(160, 0));
+	vector<mpz_class> myXX;
+	vector<mpz_class> myT;
 
-	double dt;
-	long ltmp;
-	for(int i = 0; i < 160; i++) 
-	    for(int j = 0; j < 160; j++) {
+	double tt;
+	long tt2;
+	for(int i = 0; i < 12792; i++) 
+	    for(int j = 0; j < 160; j++)  {
 		if(i < 160) {
-		    fin2>>dt;
-		    ltmp = dt * 1e5;
-		    myA[i][j] = ltmp;
-		    fin3>>dt;
-		    ltmp = dt * 1e5;
-		    myG[i][j] = ltmp;
+		    fin2>>tt;
+		    tt2 = tt * 1e13;
+		    myA[i][j] = tt2;
+		    fin3>>tt;
+		    tt2 = tt * 1e13;
+		    myG[i][j] = tt2;
 		}
-		if( i < 20) {
-		fin1>>dt;
-		ltmp = dt * 1e5;
-		myV[i][j] = ltmp;
-		}
+		fin1>>tt;
+		tt2 = tt * 1e13;
+		myV[i][j] = tt2;
 	    }
+
+	cout<<"INT "<<num<<endl;
+	vector<mpz_class> myX;
+	for(int i = 0; i < 160; i++) {
+	    myX.push_back(myV[num][i]);
+	}
+	vector<mpz_class> myY = compute_dot_product2();
 
 	Paillier &p = *server_paillier_;
-	vector<mpz_class> myX(160);
-	vector<mpz_class> myY(160);
-	vector<mpz_class> myGG(160);
-	vector<mpz_class> myXX(25600);
-	vector<mpz_class> myYY(25600);
-	vector<mpz_class> myAY(25600);
-	mpz_class totA = 0;
-	mpz_class totA2 = 0;
-	mpz_class totG = 1;
-	mpz_class tot = 0;
 	mpz_class tmp = 0;
+	mpz_class emp = 1;
+	mpz_class emp2 = 1;
+	mpz_class tot = 1;
+	mpz_class t0 = 0;
+	mpz_class t1 = 1;
+	mpz_class t2 = 1;
+	vector<mpz_class> tt0(25600);
+	vector<mpz_class> tt1(25600);
+
+	t.lap();
+	for(int i = 0; i < 160; i++) {
+	    tmp = 0;
+	    for(int j = 0; j < 160; j++) {
+		myXX.push_back(myX[i] * myX[j]);
+		tmp += myX[j] * myG[j][i];
+	    }
+	    myT.push_back(tmp);
+	}
+	cout<<"G TIME: "<<t.lap_ms()<<endl;
+
+	tmp = 0;
+        t.lap(); // reset timer
+#pragma omp parallel for
+	for(int i = 0; i < 160; i++) {
+	    /*
+	    t0 = 0;
+	    t1 = 1;
+	    t2 = 1;
+	    */
+	    for(int j = 0; j < 160; j++) {
+		tt0[i * 160 + j] = myXX[i * 160 + j] * myA[i][j];
+		tt1[i * 160 + j] = p.constMult(myA[i][j], myY[i * 160 + j]);
+
+		/*
+		t0 = t0 + myXX[i * 160 + j] * myA[i][j];
+		t1 = p.add(t1, p.constMult(myA[i][j], myY[i * 160 + j]));
+		if(i == 0)
+		    t2 = p.add(t2, p.constMult(myT[j], myY[25600 + j]));
+		*/
+	    }
+	    /*
+	    tmp = tmp + t0;
+	    emp = p.add(emp, t1);
+	    if(i == 0) emp2 = p.add(emp2, t2);
+	    */
+	}
 
 	for(int i = 0; i < 160; i++) {
-	    myX[i] = myV[num][i];
-	    myY[i] = myV[num2][i];
-	}
-	vector<mpz_class> myGY = compute_dot_product2();
-
-	for(int i = 0; i < 160; i++)
-	    for(int j = 0; j < 160; j++)
-		myGG[i] += myX[j] * myG[j][i];
-
-#pragma omp parallel for
-	for(int i = 0; i < 160; i++)
+	    t0 = 1;
 	    for(int j = 0; j < 160; j++) {
-		myXX[i * 160 + j] = myX[i] * myX[j];
-		myYY[i * 160 + j] = myY[i] * myY[j];
-	    }
-
-#pragma omp parallel for
-	for(int i = 0; i < 13; i++)
-	    for(int j = 0; j < 160; j++)
-		if(i * 160 + j < 2000)
-		    myYY[i * 160 + j] = p.encrypt(myY[i] * myY[j]);
-
-	for(int i = 0; i < 160; i++)
-	    for(int j = 0; j < 160; j++) {
-		totA += myXX[i * 160 + j] * myA[i][j];
-		if(i * 160 + j >= 2000)
-		    totA2 += myYY[i * 160 + j] * myA[i][j];
-		//totA2 = p.add(totA2, p.constMult(myA[i][j], p.encrypt(myYY[i*160+j])));
-		//totA2 += myYY[i * 160 + j] * myA[i][j];
+		tmp = tmp + tt0[i* 160 + j];
+		t0 = p.add(t0, tt1[i*160 + j]);
 		if(i == 0)
-		    totG = p.add(totG, p.constMult(myGG[j], p.encrypt(myY[j])));
-		    //totG += myGG[j] * myY[j];
+		    emp2 = p.add(emp2, p.constMult(myT[j], myY[25600 + j]));
 	    }
-
-#pragma omp parallel for
-	for(int i = 0; i < 160; i++)
-	    for(int j = 0; j < 160; j++)
-		if( i * 160 + j < 2000)
-		    myAY[i * 160 + j] = p.constMult(myA[i][j], myYY[i * 160 + j]);
-
-	totA2 = p.encrypt(totA2);
-	for(int i = 0; i < 2000; i++)
-	    totA2 = p.add(totA2, myAY[i]);
-
-
-	//tot = totA + totA2 - 2 * totG;
-	//tot = totA + totA2;
-	tot = totA;
-	tot = p.add(p.encrypt(tot), totA2);
-	//tot = p.encrypt(tot);
-	tot = p.add(tot, p.constMult(-2, totG));
-	tmp = 169 * 1e14;
+	    emp = p.add(emp, t0);
+	}
 	tot = p.add(tot, p.encrypt(tmp));
-
+	tot = p.add(tot, emp);
+	tot = p.add(tot, p.constMult(-2, emp2));
+	tt2 = -169;
+	tmp = tt2 * 1e38;
+	tot = p.add(tot, p.encrypt(tmp));
+	cout<<"EM ALGORITHM TIME: "<<t.lap_ms()<<endl;
 
 	
         RESET_BENCHMARK_TIMER
@@ -309,24 +305,27 @@ void Bench_Linear_Classifier_Client::run(int num, int num2)
 	t.lap();
         // build the comparator over encrypted data
         bool result = enc_comparison(tot,w,bit_size_,GC_PROTOCOL);	
-	if(result == 0) {
-	    cout<<"\033[32m __        __   _                            _   _                      _ "<<endl;
-	    cout<<"\033[32m \\ \\      / /__| | ___ ___  _ __ ___   ___  | | | | ___  _ __ ___   ___| |"<<endl;
-	    cout<<"\033[32m  \\ \\ /\\ / / _ \\ |/ __/ _ \\| '_ ` _ \\ / _ \\ | |_| |/ _ \\| '_ ` _ \\ / _ \\ |"<<endl;
-	    cout<<"\033[32m   \\ V  V /  __/ | (_| (_) | | | | | |  __/ |  _  | (_) | | | | | |  __/_|"<<endl;
-	    cout<<"\033[32m    \\_/\\_/ \\___|_|\\___\\___/|_| |_| |_|\\___| |_| |_|\\___/|_| |_| |_|\\___(_)"<<endl;
-	}
-	else{
-	    cout<<"\033[31m  _____                _               _       _ "<<endl;
-	    cout<<"\033[31m |_   _| __ _   _     / \\   __ _  __ _(_)_ __ | |"<<endl;
-	    cout<<"\033[31m   | || '__| | | |   / _ \\ / _` |/ _` | | '_ \\| |"<<endl;
-	    cout<<"\033[31m   | || |  | |_| |  / ___ \\ (_| | (_| | | | | |_|"<<endl;
-	    cout<<"\033[31m   |_||_|   \\__, | /_/   \\_\\__, |\\__,_|_|_| |_(_)"<<endl;
-	    cout<<"\033[31m	     |___/          |___/                 "<<endl;
-	}
+	cout<<result<<endl;
+	if(result == 0)
+	    cout<<"\n>>>>>>> IntraPersonal"<<endl;
+	else
+	    cout<<"\n>>>>>>> InterPersonal"<<endl;
 
         compare_time += t.lap_ms();
 
         client_time += GET_BENCHMARK_TIME;
+	cout<<"COMPARE TIME: "<<client_time<<endl;
+
+
+/*
+#ifdef BENCHMARK
+    cout << "Average time for " << nRounds_ << " rounds: " << endl;
+    cout << "Client time: " << client_time/nRounds_ << endl;
+    cout << "Compare time: " << compare_time/nRounds_ << endl;
+    cout << "Dot product time: " << dot_prod_time/nRounds_ << endl;
+    cout << (IOBenchmark::byte_count()/(to_kB*nRounds_)) << " exchanged kB per round" << endl;
+    cout << IOBenchmark::interaction_count()/nRounds_ << " interactions per round" << endl;
+#endif
+*/
 
 }

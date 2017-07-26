@@ -23,6 +23,8 @@
 #include <util/util.hh>
 #include <util/benchmarks.hh>
 #include <ctime>
+#include <vector>
+#include <fstream>
 
 static void test_linear_classifier_client(const string &hostname, unsigned int model_size, unsigned int nbits_max)
 {
@@ -75,16 +77,16 @@ static void test_linear_classifier_client(const string &hostname, unsigned int m
 }
 
 
-static void bench_linear_classifier_client(const string &hostname, unsigned int model_size, unsigned int nbits_max, unsigned int nRounds = 10)
+static void bench_linear_classifier_client(const string &hostname, unsigned int model_size, unsigned int nbits_max, unsigned int nRounds , unsigned int num, unsigned int num2)
 {
-    cout << "Client for linear classifier\n";
-    cout << "Model as dimension " << model_size << "\n";
-    cout << nbits_max << " bits of precision" << endl;
+    //cout << "Client for linear classifier\n";
+    //cout << "Model as dimension " << model_size << "\n";
+    //cout << nbits_max << " bits of precision" << endl;
     
     try
     {
 #ifdef BENCHMARK
-        cout << "BENCHMARK flag set" << endl;
+        //cout << "BENCHMARK flag set" << endl;
         BENCHMARK_INIT
 #endif
         
@@ -96,8 +98,9 @@ static void bench_linear_classifier_client(const string &hostname, unsigned int 
         
         srand(time(NULL));
         
-//        assert(nbits_max > model_size + 1);
+        //assert(nbits_max > model_size + 1);
         unsigned int nbits = nbits_max - model_size - 1;
+	nbits = 10;
         long two_nbits = 1 << nbits;
         
         vector<mpz_class> values(model_size);
@@ -112,7 +115,7 @@ static void bench_linear_classifier_client(const string &hostname, unsigned int 
         
         client.connect(io_service, hostname);
         
-        client.run();
+        client.run(num, num2);
         
         //        client.disconnect();
     }
@@ -125,16 +128,16 @@ static void bench_linear_classifier_client(const string &hostname, unsigned int 
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3)
+    if (argc != 4)
     {
         std::cerr << "Usage: client <host> <model_size>" << std::endl;
         return 1;
     }
     string hostname(argv[1]);
-    unsigned int model_size(atoi(argv[2]));
+    unsigned int model_size(160);
 
 //    test_linear_classifier_client(hostname,model_size);
-    bench_linear_classifier_client(hostname,model_size,64,10);
+    bench_linear_classifier_client(hostname,model_size, 64,40, atoi(argv[2]), atoi(argv[3]));
     
     return 0;
 }

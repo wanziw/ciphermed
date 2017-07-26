@@ -58,4 +58,5 @@ Ctxt exec_change_encryption_scheme_slots(tcp::socket &socket, const vector<mpz_c
 void exec_change_encryption_scheme_slots_helper(tcp::socket &socket, GM_priv &gm, const FHEPubKey &publicKey, const EncryptedArray &ea);
 
 mpz_class exec_compute_dot_product(tcp::socket &socket, const vector<mpz_class> &x, Paillier &p);
+vector<mpz_class> exec_compute_dot_product2(tcp::socket &socket, Paillier &p);
 void exec_help_compute_dot_product(tcp::socket &socket, const vector<mpz_class> &y, Paillier_priv &pp, bool encrypted_input);

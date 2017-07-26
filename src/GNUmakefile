@@ -1,8 +1,8 @@
 -include config.mk
 
-SHAIFHEPATH ?= $(HOME)/HElib/src
-NTLLIBPATH ?= $(HOME)/ntl-6.0.0-bin/lib
-NTLINCPATH ?= $(HOME)/ntl-6.0.0-bin/include
+SHAIFHEPATH ?= $(HOME)/workspace/HElib/src
+NTLLIBPATH ?= $(HOME)/ntl-9.3.0-bin/lib
+NTLINCPATH ?= $(HOME)/ntl-9.3.0-bin/include
 JSONCPP ?= /usr/include/jsoncpp
 
 L_BOOST_SYSTEM ?= -lboost_system
@@ -21,6 +21,17 @@ ifeq ($(strip $(BENCHMARK)),1)
 	CXXOPT := $(CXXOPT) -D BENCHMARK
 endif
 
+ifdef NFL_LIBRARY_PATH
+   LFLAGS += -L$(NFL_LIBRARY_PATH)
+endif
+ifdef NFL_INCLUDE_PATH
+    IFLAGS += -I$(NFL_INCLUDE_PATH)
+endif
+
+LFLAGS += -lnfllib -lmpfr -lgmpxx -lgmp
+IFLAGS += -I.
+
+
 OBJDIR	 := obj
 TOP	 := $(shell echo $${PWD-`pwd`})
 SHARED_OBJDIR = $(TOP)/$(OBJDIR)
@@ -29,7 +40,7 @@ SHARED_OBJDIR = $(TOP)/$(OBJDIR)
 CXX	 ?= g++
 CXXWARNINGS := -Wall -Wpointer-arith -Wendif-labels -Wformat=2 -Wextra -Wwrite-strings -Wno-unused-parameter -Wno-ignored-qualifiers -Wmissing-declarations -Woverloaded-virtual -Wunreachable-code
 
-CXXFLAGS := $(CXXOPT) -fno-strict-aliasing -fwrapv -fPIC \
+CXXFLAGS := $(CXXOPT) -fno-strict-aliasing -fwrapv -fPIC -fopenmp\
         -maes -msse4 \
         $(CXXWARNINGS) -D_GNU_SOURCE -std=c++0x  \
 	    -fno-omit-frame-pointer -I$(TOP) -I$(SHAIFHEPATH) -I$(NTLINCPATH) -I$(JSONCPP)

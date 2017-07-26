@@ -87,6 +87,7 @@ public:
     void run_change_encryption_scheme_slots_helper();
 
     mpz_class compute_dot_product(const vector<mpz_class> &x);
+    vector<mpz_class> compute_dot_product2();
     void help_compute_dot_product(const vector<mpz_class> &y, bool encrypted_input = false);
     
     /* calls to the comparison owner and helper objects */

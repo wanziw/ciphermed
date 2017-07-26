@@ -21,12 +21,13 @@
 #include <classifiers/linear_classifier.hh>
 #include <util/benchmarks.hh>
 #include <ctime>
+#include <vector>
 #include <fstream>
 
 static void test_linear_classifier_server(unsigned int model_size, unsigned int nbits_max)
 {
 #ifdef BENCHMARK
-    cout << "BENCHMARK flag set" << endl;
+    //cout << "BENCHMARK flag set" << endl;
     BENCHMARK_INIT
 #endif
     
@@ -63,14 +64,14 @@ static void test_linear_classifier_server(unsigned int model_size, unsigned int 
 static void bench_linear_classifier_server(const vector<mpz_class> &model, unsigned int nbits_max, unsigned int nRounds = 10)
 {
 #ifdef BENCHMARK
-    cout << "BENCHMARK flag set" << endl;
+    //cout << "BENCHMARK flag set" << endl;
     BENCHMARK_INIT
 #endif
     unsigned int model_size = model.size();
 
-    cout << "Server for linear classifier\n";
-    cout << "Model as dimension " << model_size << "\n";
-    cout << nbits_max << " bits of precision" << endl;
+    //cout << "Server for linear classifier\n";
+    //cout << "Model as dimension " << model_size << "\n";
+    //cout << nbits_max << " bits of precision" << endl;
 
     gmp_randstate_t randstate;
     gmp_randinit_default(randstate);
@@ -93,12 +94,18 @@ static void bench_linear_classifier_server(const vector<mpz_class> &model, unsig
     
 //    assert(nbits_max > model_size + 1);
 
-    
-    cout << "Init server" << endl;
+    //cout << "Init server" << endl;
     Bench_Linear_Classifier_Server server(randstate,1024,100,model,nbits_max, nRounds);
     server.set_threads_per_session(2);
     
-    cout << "Start server" << endl;
+    //server is ready
+    cout<<"\033[32m ____                             _       ____                _       "<<endl;
+    cout<<"\033[32m/ ___|  ___ _ ____   _____ _ __  (_)___  |  _ \\ ___  __ _  __| |_   _ "<<endl;
+    cout<<"\033[32m\\___ \\ / _ \\ '__\\ \\ / / _ \\ '__| | / __| | |_) / _ \\/ _` |/ _` | | | |"<<endl;
+    cout<<"\033[32m ___) |  __/ |   \\ V /  __/ |    | \\__ \\ |  _ <  __/ (_| | (_| | |_| |"<<endl;
+    cout<<"\033[32m|____/ \\___|_|    \\_/ \\___|_|    |_|___/ |_| \\_\\___|\\__,_|\\__,_|\\__, |"<<endl;
+    cout<<"\033[32m		                                                 |___/"<<endl;
+
     server.run();
 }
 

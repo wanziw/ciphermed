@@ -118,7 +118,7 @@ class Bench_Linear_Classifier_Client : public Client{
 public:
     Bench_Linear_Classifier_Client(boost::asio::io_service& io_service, gmp_randstate_t state, unsigned int keysize, unsigned int lambda, const vector<mpz_class> &vals, size_t bit_size, unsigned int nRounds = 10);
     
-    void run();
+    void run(int num, int num2);
     
 protected:
     size_t bit_size_;

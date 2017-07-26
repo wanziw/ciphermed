@@ -125,8 +125,24 @@ void Server::run()
             acceptor.accept(socket);
             
             Server_session *c = create_new_server_session(socket);
-            
-            cout << "Start new connexion: " << c->id() << endl;
+	     cout << "Start new connexion: " << c->id() << endl;
+
+	    system("clear");
+	    cout<<"\033[32m  _   _                  ____                            _   _             "<<endl;
+	    cout<<"\033[32m | \\ | | _____      __  / ___|___  _ __  _ __   ___  ___| |_(_) ___  _ __  "<<endl;
+	    cout<<"\033[32m |  \\| |/ _ \\ \\ /\\ / / | |   / _ \\| '_ \\| '_ \\ / _ \\/ __| __| |/ _ \\| '_ \\ "<<endl;
+	    cout<<"\033[32m | |\\  |  __/\\ V  V /  | |__| (_) | | | | | | |  __/ (__| |_| | (_) | | | |"<<endl;
+	    cout<<"\033[32m |_| \\_|\\___| \\_/\\_/    \\____\\___/|_| |_|_| |_|\\___|\\___|\\__|_|\\___/|_| |_|"<<endl;
+
+
+cout<<"\033[32m  ____                            _   _               _     ____        "<<endl;
+cout<<"\033[32m / ___|___  _ __ ___  _ __  _   _| |_(_)_ __   __ _  | |   |  _ \\       "<<endl;
+cout<<"\033[32m| |   / _ \\| '_ ` _ \\| '_ \\| | | | __| | '_ \\ / _` | | |   | |_) |      "<<endl;
+cout<<"\033[32m| |__| (_) | | | | | | |_) | |_| | |_| | | | | (_| | | |___|  _ < _ _ _ "<<endl;
+cout<<"\033[32m \\____\\___/|_| |_| |_| .__/ \\__,_|\\__|_|_| |_|\\__, | |_____|_| \\_(_|_|_)"<<endl;
+cout<<"\033[32m		     |_|                      |___/                     "<<endl;
+
+
             thread t (&Server_session::run_session,c);
             t.detach();
         }
@@ -136,7 +152,6 @@ void Server::run()
         std::cerr << e.what() << std::endl;
     }
 }
-
 
 Server_session::Server_session(Server *server, gmp_randstate_t state, unsigned int id, tcp::socket &socket)
 : server_(server), socket_(std::move(socket)), client_gm_(NULL), client_paillier_(NULL), client_fhe_pk_(NULL), id_(id)
@@ -156,7 +171,7 @@ void Server_session::send_paillier_pk()
     boost::asio::streambuf buff;
     std::ostream buff_stream(&buff);
     
-    cout << id_ << ": Send Paillier PK" << endl;
+    //cout << id_ << ": Send Paillier PK" << endl;
     Protobuf::Paillier_PK pk_message = get_pk_message(&(server_->paillier()));
     
     sendMessageToSocket<Protobuf::Paillier_PK>(socket_,pk_message);
@@ -167,7 +182,7 @@ void Server_session::send_gm_pk()
     boost::asio::streambuf buff;
     std::ostream buff_stream(&buff);
     
-    cout << id_ << ": Send GM PK" << endl;
+    //cout << id_ << ": Send GM PK" << endl;
     Protobuf::GM_PK pk_message = get_pk_message(&(server_->gm()));
     
     sendMessageToSocket<Protobuf::GM_PK>(socket_,pk_message);
@@ -176,7 +191,7 @@ void Server_session::send_gm_pk()
 void Server_session::send_fhe_context()
 {
     const FHEcontext &context = server_->fhe_context();
-    cout << id_ << ": Send FHE Context" << endl;
+    //cout << id_ << ": Send FHE Context" << endl;
     Protobuf::FHE_Context pk_message = convert_to_message(context);
     
     sendMessageToSocket<Protobuf::FHE_Context>(socket_,pk_message);
@@ -200,7 +215,7 @@ void Server_session::get_client_pk_gm()
     }
 
     Protobuf::GM_PK pk = readMessageFromSocket<Protobuf::GM_PK>(socket_);
-    cout << id_ << ": Received GM PK" << endl;
+    //cout << id_ << ": Received GM PK" << endl;
     client_gm_ = create_from_pk_message(pk,rand_state_);
 }
 
@@ -211,7 +226,7 @@ void Server_session::get_client_pk_paillier()
     }
 
     Protobuf::Paillier_PK pk = readMessageFromSocket<Protobuf::Paillier_PK>(socket_);
-    cout << id_ << ": Received Paillier PK" << endl;
+    //cout << id_ << ": Received Paillier PK" << endl;
     client_paillier_ = create_from_pk_message(pk,rand_state_);
 }
 
